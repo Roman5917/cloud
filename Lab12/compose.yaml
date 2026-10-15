@@ -1,0 +1,34 @@
+services:
+  app:
+    build: ./app
+    ports:
+      - "8080:8080"          # host:container
+    environment:
+      REDIS_URL: redis://redis:6379
+      STARTUP_DELAY_MS: "8000"   # імітація повільного старту застосунку
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 15s
+    networks:
+      - backend
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    networks:
+      - backend
+
+networks:
+  backend:
+    driver: bridge
